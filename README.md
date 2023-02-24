@@ -1,88 +1,82 @@
 # 3-staged-pipelined-RISC-V_32I-Implementation
 Coverted previous RISC-V-32I Single cycle implementation to 3 Staged Pipeline along with resolved hazards and CSR support.
 
-# Pipelining:
-The single cycle RISC-V processor is converted to a 3-stage pipeline processor to increase the throughput of processor. The three stages are as follows: 
-1. Fetch
-2. Decode-Execute
-3. Memory-Write Back 
+# Pipeline Implementation: 
+The single cycle RISC-V 32I is converted to a 3-staged pipeline. Following are the 3 stages: 
+* Fetch
+* Decode & Execute
+* Memory & write back 
 
-As a first step towards pipelining, flip-flops are inserted between these stages. Two flip-flops areinserted between stage 1 and stage 2 for storing the following: 
+The pipelining is done to increase the throughput of the processor, but the time of completion remains same. Pipelining is instantiated by including 2 new modules that contains the required Flip Flops that act as pipeline registers. For the first module “Fetch to Decode-Execute” Flip flops for following:
+* PC -> PC_DE
+* Instruction -> Instruction_DE
 
-• Program Counter
+Where, PC is coming from program counter and instruction from instruction memory. For the second module, following flip flops are inserted:
+* PC_DE -> PC_MW
+* Instruction_DE -> Instruction_MW
+* Alu_result -> Alu_result_MW
+* rdata2 -> rdata2_MW
+* wdata_sel -> wdata_sel_MW
+* rfwrite -> rfwrite_MW
 
-• Instruction 
+Where, Alu_result is the output signal of ALU, rdata2 is second output of register file, wdata_sel and rfwrite are signals coming from controller. 
 
-Similarly, flip-flops are inserted between stage2 and stage3 for retaining the following:
-
-• Program Counter
-
-• Instruction
-
-• ALU Result
-
-• Results of Forwarding Multiplexers
-
-• Register Write Signal
-
-• Write Back Signal
-
-• CSR Read Write Signals
-
-• MRET Signal 
-
-# Resolving Hazards:
-When implementing a pipeline processor, we have to handle the dependency between the instructions. These hazards can be of two types: 
-
-• Data Hazards
-
-• Control Hazards 
-
-# Data Hazards:
-# Forwarding:
-In a 3-stage pipeline processor, some of the data hazards can be resolved by forwarding the ALU Result in Memory-Write Back stage to Decode-Execute stage using two forwarding multiplexers. Hence the result can be used prior to its writing back to register file.  In order to detect this data dependency a Forwarding Unit is used. Its input is the instruction and register write signal in the Memory-Write Back stage and the instruction in Decode-Execute stage.
+# Resolving Hazards: 
+As pipeline is going to handle multiple instructions concurrently, there can be dependency of a result of an instruction on another. Following hazards can take place:
  
- # Stalling:
- Forwarding is not sufficient in case of load instructions which can have multi-cycle latency due to which the results cannot be forwarded. The only solution left would be to stall the Program Counter until the result has been written to the register file. For this case, the operands of the Instruction in Fetch stage and the Instruction in Execute-Decode stage are compared.
+# Data Hazards: 
+Data Hazards take place when an instruction tries to read a register that has not been updated by previous instruction. This type of hazards occurs in R, I type, especially Load instructions. Following are the solutions implemented in the model to prevent data hazards:
  
- # Control Hazards:
- For taken branches as well as jumps the instruction which has been fetched should not be executed. That instruction should be flushed from the pipeline, while the program counter is updated to the new address. For this purpose, we need to flush the Decode-Execute stage which is done by setting the instruction pipeline register between the Fetch stage and the Decode-Execute to nop. Therefore, the forwarding unit is updated and br_res is given it as input and the flush signal is the output. 
+# Forwarding: 
+It is implemented by forwarding the result of Memory-Writeback stage (output of Alu_result pipeline register) to Decoder-Execute stage which is performed by adding forwarding multiplexers. These muxes are instantiated in front of the output rdata1 and rdata2 of register file. Forwarding is used when the destination register in MW stage matches either of the source registers in DE stage. This also leads to the addition of a forwarding unit where the Instruction_DE and Instruction_MW are compared along with rfwrite_MW signal to see whether the forwarding is needed or not. If the condition comes true, then the high signal is sent to both forwarding multiplexers. The required condition is as follows: 
+
+![image](https://user-images.githubusercontent.com/58341924/221193880-880479bb-dd97-45c3-8c9d-42248c9165c9.png)
+
+# Stalling: 
+Through forwarding, all the data hazards are removed, except that by Load Instruction. As the result in Load comes in MW stage, so the dependent instruction has to wait for 2 cycles to have the updated value. By forwarding, the stall for 1 cycle is reduced. For load instructions to work properly, we introduce the
+stalling unit that stalls the incoming instructions for 1 cycle so that load instruction could store the updated value in the required register. Note that it only happens in the case when the instructions next t load is dependent. The following condition must be satisfied for stalling: 
+
+![image](https://user-images.githubusercontent.com/58341924/221194228-7e4fd384-ea10-4b25-90bc-5f39b0909331.png)
+
+If the stalling condition is satisfied, then the stall signal is sent to Program Counter. If the signal is high, then the next PC address is set to the previous one. 
  
- # CSR Support:
- In order to support privileged architecture in our pipelined processor, we are going to partially support the machine mode of the RISC-V specification in our processor. This will involve adding support for some new instructions in our data path. We are also going to create a new register file which is going to contain the machine mode CSR registers which can be accessed by these new instructions. We will be supporting only two instructions: 
+# Control Hazards: 
+Control hazards take place when decision of fetching the next instruction has not been done during decode stages. This type of hazards occurs in Branch and Jump Instructions. Following solution is implemented to deal with control hazards.
  
-• CSSRW
+# Flushing: 
+For branches and jumps, following instructions are flushed from the pipeline, while program counter is updated to new address. DE stage is flushed by setting the instruction pipeline register between F and DE stage to NOP. For that, the condition is checked in the forwarding stall unit. If condition becomes true, then the high signal is sent to the above register which then set the instruction at that stage to NOP. The following condition needs to be satisfied:
 
-• MRET 
+![image](https://user-images.githubusercontent.com/58341924/221194441-7f6efa3c-616e-437d-9dcf-eedfba8cd4bb.png)
 
-In order to support this instruction machine mode registers will be added to the CSR Register file,
-which are as follows: 
+# CSR Support: 
+The machine mode of RISC-V is partially supported. A new register file is created that contain CSR registers. There are total 6 of them:
+* mip 
+* mie
+* mstatus
+* mcause
+* mtvec
+* mepc 
 
-• MCAUSE
+These registers have 12-bit address defined as part of RISC-V specification. This register file have address of CSR register, value of PC during MW stage, CSR write control, CSR read control, interrupt/exception pins and CSR write data at its input. CSR read data and exception PC are regarded as outputs. 
 
-• MSTATUS
+Following 2 instructions are implemented in our pipeline:
+* CSRRW
+* mret
+ 
+# CSRRW implementation: 
+After creating CSR register file, it is integrated in datapath. CSR read and write control signal are given to controller which decides based on opcode when to turn these signals on. Both these signals after passing through the DE to MW buffer are then given to CSR register file. The specific addresses for the 6 registers are defined as parameters in the CSR register file. Instead of getting the address of CSR register from immediate value generator, it is obtained by Instruction_MW[31:20]. Data to be written to CSR register is given by output of  rdata1 forwarding mux. The read data output is connected to the writeback mux.
+ 
+# Mret implementation: 
+Signal for mret instruction is given by controller i.e. is_mret which decides on the basis of opcode and func3.  This control signal after passing through DE to MW buffer is fed to CSR register file. When this signal is high, the value of mepc register is loaded into epc register and control flag is set to high. Both epc and control are then fed to program counter. In PC, when control is high (giving it priority) then the value of PC is set equal to epc. 
+ 
+# Interrupt Handling: 
+In this module, only Timer Interrupt is being handled. For timer interrupt, a timer counter is created that causes interrupt after every few fix cycles. There is no need for an encoder as there is only one kind of interrupt. Also, for this interrupt, we will be working in direct mode, but vector mode is also implemented. 
 
-• MTVEC
+The appropriate bit in the MIP and MCAUSE register goes high whenever an interrupt occurs. To determine if the interrupt has been enabled or not, the appropriate bits of the MSTATUS and MIE registers are checked. When an interrupt occurs, MEPC stores the value of PC at the Memory-Write Back stage if the interrupt is enabled and enabled. The base address of the vector table kept in MTVEC is kept in EPC. To instruct Program counter to switch to EPC and begin processing the interrupt, CSR flag (control) is raised. CSR flush_interrupt flag goes high to flush the fetched instruction. This implementation can be seen as follows: 
 
-• MEPC
+![image](https://user-images.githubusercontent.com/58341924/221194957-1a2b65ea-76ed-4105-b9ec-1e56f082dc40.png)
 
-• MIP 
+Once the interruption has been satisfactorily managed, running instructions must be resumed as usual. As a result, the mret instruction is carried out. When the interrupt occurs and the CSR Flag (control) is set to high, this instruction updates epc to the value stored in mepc. Program Counter returns to the regular
+execution of instructions in this manner. This can be seen as follows:
 
-• MIE 
-
-With the help of CSRRW, we will be able to read and write the above registers. Reading of registers is done combinationally and the writing of registers is done sequentially. The controller is also updated in order to decode these instructions. The 12 bits of instruction in Memory-Write Back stage are used as address for the CSR Register File. The Program Counter in the MemoryWrite Back stage is also an input to the CSR unit which is necessary for MRET instruction.
-
-# Handling Interrupt:
-In order to handle the interrupt some more support is added in the CSR module. The support is added only for handling timer interrupt. Also, we are working only in direct-mode and there is no need for an encoder as we are only handling a single interrupt. 
-
-Whenever an interrupt arrives, the corresponding bit in the MIP and MCAUSE register gets high. The corresponding bits of MSTATUS and MIE register are checked so as to see if the interrupt has been enabled or not. If the interrupt is enabled and the interrupt has arrived, the following steps are executed. 
-
-• MEPC stores the value of PC at Memory-Write Back stage.
-
-• EPC stores the base address of vector table stored in MTVEC.
-
-• CSR flag goes high to tell Program counter to jump to EPC and start handling the interrupt.
-
-• CSR Flush signal goes high to flush the fetched instruction. 
-
-After the interrupt is handled successfully, we need to resume the usual execution of instructions. Therefore, MRET instruction is executed. In this instruction, EPC gets updated to the value stored in MEPC when the interrupt arrived and the CSR Flag gets high. In this way Program Counter jumps back to the usual execution of instructions. 
+![image](https://user-images.githubusercontent.com/58341924/221195080-f85d6977-7c50-4535-9016-71642ab68927.png)
