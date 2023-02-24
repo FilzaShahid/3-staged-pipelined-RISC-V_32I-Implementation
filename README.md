@@ -8,22 +8,34 @@ The single cycle RISC-V processor is converted to a 3-stage pipeline processor t
 3. Memory-Write Back 
 
 As a first step towards pipelining, flip-flops are inserted between these stages. Two flip-flops areinserted between stage 1 and stage 2 for storing the following: 
+
 • Program Counter
+
 • Instruction 
 
 Similarly, flip-flops are inserted between stage2 and stage3 for retaining the following:
+
 • Program Counter
+
 • Instruction
+
 • ALU Result
+
 • Results of Forwarding Multiplexers
+
 • Register Write Signal
+
 • Write Back Signal
+
 • CSR Read Write Signals
+
 • MRET Signal 
 
 # Resolving Hazards:
 When implementing a pipeline processor, we have to handle the dependency between the instructions. These hazards can be of two types: 
+
 • Data Hazards
+
 • Control Hazards 
 
 # Data Hazards:
@@ -38,16 +50,24 @@ In a 3-stage pipeline processor, some of the data hazards can be resolved by for
  
  # CSR Support:
  In order to support privileged architecture in our pipelined processor, we are going to partially support the machine mode of the RISC-V specification in our processor. This will involve adding support for some new instructions in our data path. We are also going to create a new register file which is going to contain the machine mode CSR registers which can be accessed by these new instructions. We will be supporting only two instructions: 
+ 
 • CSSRW
+
 • MRET 
 
 In order to support this instruction machine mode registers will be added to the CSR Register file,
 which are as follows: 
+
 • MCAUSE
+
 • MSTATUS
+
 • MTVEC
+
 • MEPC
+
 • MIP 
+
 • MIE 
 
 With the help of CSRRW, we will be able to read and write the above registers. Reading of registers is done combinationally and the writing of registers is done sequentially. The controller is also updated in order to decode these instructions. The 12 bits of instruction in Memory-Write Back stage are used as address for the CSR Register File. The Program Counter in the MemoryWrite Back stage is also an input to the CSR unit which is necessary for MRET instruction.
@@ -58,8 +78,11 @@ In order to handle the interrupt some more support is added in the CSR module. T
 Whenever an interrupt arrives, the corresponding bit in the MIP and MCAUSE register gets high. The corresponding bits of MSTATUS and MIE register are checked so as to see if the interrupt has been enabled or not. If the interrupt is enabled and the interrupt has arrived, the following steps are executed. 
 
 • MEPC stores the value of PC at Memory-Write Back stage.
+
 • EPC stores the base address of vector table stored in MTVEC.
+
 • CSR flag goes high to tell Program counter to jump to EPC and start handling the interrupt.
+
 • CSR Flush signal goes high to flush the fetched instruction. 
 
 After the interrupt is handled successfully, we need to resume the usual execution of instructions. Therefore, MRET instruction is executed. In this instruction, EPC gets updated to the value stored in MEPC when the interrupt arrived and the CSR Flag gets high. In this way Program Counter jumps back to the usual execution of instructions. 
