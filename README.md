@@ -84,18 +84,27 @@ execution of instructions in this manner. This can be seen as follows:
 # Testing and Simulation
 Initially, register and data memory were considered as follows:
 Register Memory:
+
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
 Data Memory:
+
 0 0 8 22 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
 # Case 1:
 Assembly Instructions:
+
 li x10,1
+
 li x12,10
+
 csrrw x11,mtvec,x10
+
 csrrw x13,mtvec,x12
 
+
 Instruction Memory:
+
 00 30 00 93 00 40 01 13 00 20 22 23
 
 Simulation:
