@@ -95,6 +95,7 @@ Initially, register and data memory were considered as follows:
 ### Assembly Instructions:
 
 main: 
+
     li x10,1
 
     li x12,10
