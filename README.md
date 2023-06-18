@@ -94,13 +94,14 @@ Initially, register and data memory were considered as follows:
 ## Case 1:
 ### Assembly Instructions:
 
-li x10,1
+main: 
+    li x10,1
 
-li x12,10
+    li x12,10
 
-csrrw x11,mtvec,x10
+    csrrw x11,mtvec,x10
 
-csrrw x13,mtvec,x12
+    csrrw x13,mtvec,x12
 
 
 ### Instruction Memory:
