@@ -24,15 +24,15 @@ Where, Alu_result is the output signal of ALU, rdata2 is second output of regist
 # Resolving Hazards: 
 As pipeline is going to handle multiple instructions concurrently, there can be dependency of a result of an instruction on another. Following hazards can take place:
  
-# Data Hazards: 
+## Data Hazards: 
 Data Hazards take place when an instruction tries to read a register that has not been updated by previous instruction. This type of hazards occurs in R, I type, especially Load instructions. Following are the solutions implemented in the model to prevent data hazards:
  
-# Forwarding: 
+### Forwarding: 
 It is implemented by forwarding the result of Memory-Writeback stage (output of Alu_result pipeline register) to Decoder-Execute stage which is performed by adding forwarding multiplexers. These muxes are instantiated in front of the output rdata1 and rdata2 of register file. Forwarding is used when the destination register in MW stage matches either of the source registers in DE stage. This also leads to the addition of a forwarding unit where the Instruction_DE and Instruction_MW are compared along with rfwrite_MW signal to see whether the forwarding is needed or not. If the condition comes true, then the high signal is sent to both forwarding multiplexers. The required condition is as follows: 
 
 ![image](https://user-images.githubusercontent.com/58341924/221193880-880479bb-dd97-45c3-8c9d-42248c9165c9.png)
 
-# Stalling: 
+### Stalling: 
 Through forwarding, all the data hazards are removed, except that by Load Instruction. As the result in Load comes in MW stage, so the dependent instruction has to wait for 2 cycles to have the updated value. By forwarding, the stall for 1 cycle is reduced. For load instructions to work properly, we introduce the
 stalling unit that stalls the incoming instructions for 1 cycle so that load instruction could store the updated value in the required register. Note that it only happens in the case when the instructions next t load is dependent. The following condition must be satisfied for stalling: 
 
@@ -40,10 +40,10 @@ stalling unit that stalls the incoming instructions for 1 cycle so that load ins
 
 If the stalling condition is satisfied, then the stall signal is sent to Program Counter. If the signal is high, then the next PC address is set to the previous one. 
  
-# Control Hazards: 
+## Control Hazards: 
 Control hazards take place when decision of fetching the next instruction has not been done during decode stages. This type of hazards occurs in Branch and Jump Instructions. Following solution is implemented to deal with control hazards.
  
-# Flushing: 
+### Flushing: 
 For branches and jumps, following instructions are flushed from the pipeline, while program counter is updated to new address. DE stage is flushed by setting the instruction pipeline register between F and DE stage to NOP. For that, the condition is checked in the forwarding stall unit. If condition becomes true, then the high signal is sent to the above register which then set the instruction at that stage to NOP. The following condition needs to be satisfied:
 
 ![image](https://user-images.githubusercontent.com/58341924/221194441-7f6efa3c-616e-437d-9dcf-eedfba8cd4bb.png)
@@ -63,10 +63,10 @@ Following 2 instructions are implemented in our pipeline:
 * CSRRW
 * mret
  
-# CSRRW implementation: 
+## CSRRW implementation: 
 After creating CSR register file, it is integrated in datapath. CSR read and write control signal are given to controller which decides based on opcode when to turn these signals on. Both these signals after passing through the DE to MW buffer are then given to CSR register file. The specific addresses for the 6 registers are defined as parameters in the CSR register file. Instead of getting the address of CSR register from immediate value generator, it is obtained by Instruction_MW[31:20]. Data to be written to CSR register is given by output of  rdata1 forwarding mux. The read data output is connected to the writeback mux.
  
-# Mret implementation: 
+## Mret implementation: 
 Signal for mret instruction is given by controller i.e. is_mret which decides on the basis of opcode and func3.  This control signal after passing through DE to MW buffer is fed to CSR register file. When this signal is high, the value of mepc register is loaded into epc register and control flag is set to high. Both epc and control are then fed to program counter. In PC, when control is high (giving it priority) then the value of PC is set equal to epc. 
  
 # Interrupt Handling: 
@@ -91,8 +91,8 @@ Data Memory:
 
 0 0 8 22 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
-# Case 1:
-Assembly Instructions:
+## Case 1:
+### Assembly Instructions:
 
 li x10,1
 
@@ -103,16 +103,19 @@ csrrw x11,mtvec,x10
 csrrw x13,mtvec,x12
 
 
-Instruction Memory:
+### Instruction Memory:
 
 00 30 00 93 00 40 01 13 00 20 22 23
 
-Simulation:
+### Simulation:
+
 ![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/1f262ff7-de11-4094-ba24-a0efc71eeff8)
 ![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/62fca929-2bef-469c-8d39-0006e94f0bb7)
 
-Register Memory:
+### Register Memory:
+
 ![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/612049e9-5e67-4af6-8dcd-31b68c5fc472)
 
-Data Memory:
+### Data Memory:
+
 ![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/0817739b-7a64-4bc8-a6b0-94697613bdc7)
