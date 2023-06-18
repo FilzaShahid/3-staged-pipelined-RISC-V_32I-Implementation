@@ -1,18 +1,20 @@
 # Testing and Simulation
-Initially, register and data memory were considered as follows:
-### Register Memory:
-
-0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-
-### Data Memory:
-
-0 0 8 22 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-
-## Case 1:
+## Case 1: GCD computation
 ### Assembly Instructions:
 
-
-### Instruction Memory:
+    li x8, 56
+    li x9, 84
+gcd:
+    beq x8, x9, stop
+    blt x8, x9, less
+    sub x8, x8, x9
+    j gcd
+less:
+    sub x9, x9, x8
+    j gcd
+stop:
+    sw x8, 0x08(x0)
+    lw x10, 0x08(x0)
 
 
 ### Simulation:
@@ -22,16 +24,14 @@ Initially, register and data memory were considered as follows:
 
 
 ### Data Memory:
+
+### Instruction Memory:
 
 
 ## Case 2:
 ### Assembly Instructions:
 
 
-
-### Instruction Memory:
-
-
 ### Simulation:
 
 
@@ -40,3 +40,5 @@ Initially, register and data memory were considered as follows:
 
 ### Data Memory:
 
+
+### Instruction Memory:
