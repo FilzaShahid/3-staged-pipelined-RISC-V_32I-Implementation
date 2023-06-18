@@ -83,11 +83,11 @@ execution of instructions in this manner. This can be seen as follows:
 
 # Testing and Simulation
 Initially, register and data memory were considered as follows:
-Register Memory:
+### Register Memory:
 
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
-Data Memory:
+### Data Memory:
 
 0 0 8 22 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
@@ -119,3 +119,58 @@ csrrw x13,mtvec,x12
 ### Data Memory:
 
 ![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/0817739b-7a64-4bc8-a6b0-94697613bdc7)
+
+## Case 2:
+### Assembly Instructions:
+
+main:
+
+    addi x1, x0, 2
+
+    addi x2, x1, 3
+    
+    bne x2, x1, jump
+
+back:
+
+    sw x4, 0x08(x0)
+    
+    lw x5, 0x08(x0)
+    
+    sub x6, x5, x2
+    
+    bge x5, x1, stop
+
+jump:
+
+    sw x2, 0x04(x0)
+    
+    lw x3, 0x04(x0)
+    
+    add x4, x3, x2
+    
+    j back
+
+stop:
+
+    j stop
+
+### Instruction Memory:
+
+00200093 00308113 00111a63 00402423 00802283 40228333 0012da63 00202223 00402183 00218233 fe5ff06f 0000006f
+
+### Simulation:
+
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/f6687950-92d7-4ec9-86f3-b157881c50c9)
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/73ec8a54-dd71-4c89-ad75-b7a44b153f1f)
+
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/c97402b6-50ba-427b-bb04-f5739451448c)
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/e48f730d-d50b-419d-b161-34ad1fc0d1ce)
+
+### Register Memory:
+
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/ac78b890-83c1-4947-8543-62457cd064b3)
+
+### Data Memory:
+
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/399e2516-f108-42c6-809f-4d60afe9f187)
