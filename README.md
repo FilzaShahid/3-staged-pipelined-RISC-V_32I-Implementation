@@ -80,3 +80,30 @@ Once the interruption has been satisfactorily managed, running instructions must
 execution of instructions in this manner. This can be seen as follows:
 
 ![image](https://user-images.githubusercontent.com/58341924/221195080-f85d6977-7c50-4535-9016-71642ab68927.png)
+
+# Testing and Simulation
+Initially, register and data memory were considered as follows:
+Register Memory:
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+Data Memory:
+0 0 8 22 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+# Case 1:
+Assembly Instructions:
+li x10,1
+li x12,10
+csrrw x11,mtvec,x10
+csrrw x13,mtvec,x12
+
+Instruction Memory:
+00 30 00 93 00 40 01 13 00 20 22 23
+
+Simulation:
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/1f262ff7-de11-4094-ba24-a0efc71eeff8)
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/62fca929-2bef-469c-8d39-0006e94f0bb7)
+
+Register Memory:
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/612049e9-5e67-4af6-8dcd-31b68c5fc472)
+
+Data Memory:
+![image](https://github.com/FilzaShahid/3-staged-pipelined-RISC-V_32I-Implementation/assets/58341924/0817739b-7a64-4bc8-a6b0-94697613bdc7)
